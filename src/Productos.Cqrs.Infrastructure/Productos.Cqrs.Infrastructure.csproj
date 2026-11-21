@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Detalles tecnicos: EF Core, servicios externos. Implementa los puertos de Domain/Application. -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Productos.Cqrs.Application\Productos.Cqrs.Application.csproj" />
+  </ItemGroup>
+</Project>
