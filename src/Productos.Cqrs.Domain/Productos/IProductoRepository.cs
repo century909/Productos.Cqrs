@@ -8,6 +8,7 @@ public interface IProductoRepository
 {
     Task<Producto?> ObtenerPorIdAsync(Guid id, CancellationToken ct = default);
     void Agregar(Producto producto);
+    void Eliminar(Producto producto);
 }
 
 /// <summary>Confirma los cambios del comando como una unidad.</summary>

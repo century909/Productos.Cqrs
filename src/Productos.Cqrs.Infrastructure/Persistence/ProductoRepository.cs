@@ -10,4 +10,6 @@ internal sealed class ProductoRepository(ProductosDbContext db) : IProductoRepos
         => db.Productos.FirstOrDefaultAsync(p => p.Id == id, ct);
 
     public void Agregar(Producto producto) => db.Productos.Add(producto);
+
+    public void Eliminar(Producto producto) => db.Productos.Remove(producto);
 }

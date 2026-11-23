@@ -55,6 +55,15 @@ public sealed class Producto : Entity
         };
     }
 
+    public void Eliminar()
+    {
+        if (Estado != EstadoProducto.Descontinuado)
+            throw new DomainException($"Solo se pueden eliminar productos descontinuados. Estado actual: {Estado}.");
+        if (Stock > 0)
+            throw new DomainException("No se puede eliminar un producto con stock positivo.");
+        // Se podria agregar un flag IsDeleted para soft delete, pero en este template se elimina fisicamente.
+    }
+
     // AjustarStock y Descontinuar no se exponen en la API de este template: los usa el seed (DatosIniciales)
     // y sirven de modelo para agregar nuevos comandos.
 
@@ -80,6 +89,8 @@ public sealed class Producto : Entity
     {
         if (Estado != EstadoProducto.Activo)
             throw new DomainException($"Solo se pueden descontinuar productos activos. Estado actual: {Estado}.");
+        if (Stock > 0)
+            throw new DomainException("Solo se puede descontinuar un producto sin stock. Ajuste el stock a cero primero.");
         if (string.IsNullOrWhiteSpace(motivo))
             throw new DomainException("El motivo de descontinuacion es obligatorio.");
 

@@ -1,12 +1,13 @@
 using Productos.Cqrs.Application.Abstractions.Messaging;
 using Productos.Cqrs.Application.Productos.Commands.CrearProducto;
+using Productos.Cqrs.Application.Productos.Commands.EliminarProducto;
 using Productos.Cqrs.Application.Productos.Queries;
 using Productos.Cqrs.Domain.Productos;
 
 namespace Productos.Cqrs.Api.Endpoints;
 
 /// <summary>
-/// La presentacion solo conoce ISender: GET -> Query, POST -> Command.
+/// La presentacion solo conoce ISender: GET -> Query, POST/DELETE -> Command.
 /// No sabe que handler se ejecuta ni que behaviors lo envuelven.
 /// </summary>
 public static class ProductosEndpoints
@@ -38,6 +39,16 @@ public static class ProductosEndpoints
             })
             .WithName("CrearProducto")
             .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+        
+        group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
+            {
+                await sender.Send(new EliminarProductoCommand(id), ct);
+                return TypedResults.NoContent();
+            })
+            .WithName("EliminarProducto")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         return app;
