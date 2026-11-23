@@ -130,3 +130,44 @@ Content-Type: application/json
 
 # 3) Eliminar descontinuado y sin stock (204)
 DELETE {{baseUrl}}/api/productos/{{productoId}}
+
+### Actualizar producto (PUT, 200)
+PUT {{baseUrl}}/api/productos/{{productoId}}
+Content-Type: application/json
+
+{
+  "nombre": "Laptop Pro 15",
+  "descripcion": "16 GB RAM / 512 GB SSD",
+  "categoria": "Electronica",
+  "precio": 4200000
+}
+
+### Actualizar producto inexistente (404)
+PUT {{baseUrl}}/api/productos/99999999-9999-9999-9999-999999999999
+Content-Type: application/json
+
+{
+  "nombre": "Fantasma",
+  "categoria": "Hogar",
+  "precio": 500000
+}
+
+### Actualizar con nombre vacio (400 formato)
+PUT {{baseUrl}}/api/productos/{{productoId}}
+Content-Type: application/json
+
+{
+  "nombre": "",
+  "categoria": "Electronica",
+  "precio": 4200000
+}
+
+### Actualizar con precio fuera de rango (422 negocio)
+PUT {{baseUrl}}/api/productos/{{productoId}}
+Content-Type: application/json
+
+{
+  "nombre": "Laptop Pro 15",
+  "categoria": "Electronica",
+  "precio": 10
+}

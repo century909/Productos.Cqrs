@@ -1,7 +1,15 @@
+using Productos.Cqrs.Domain.Productos;
+
 namespace Productos.Cqrs.Api.Endpoints;
 
 // Cuerpos HTTP separados de los commands: Application no conoce contratos de la API.
 // El Id del producto viaja en la ruta, no en el body.
+
+public sealed record ActualizarProductoRequest(
+    string Nombre,
+    string? Descripcion,
+    CategoriaProducto Categoria,
+    decimal Precio);
 
 public sealed record DescontinuarProductoRequest(string Motivo);
 

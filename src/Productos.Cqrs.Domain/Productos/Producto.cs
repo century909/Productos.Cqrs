@@ -97,4 +97,18 @@ public sealed class Producto : Entity
         Estado = EstadoProducto.Descontinuado;
         MotivoDescontinuacion = motivo.Trim();
     }
+    public void Actualizar(string nombre, string? descripcion, CategoriaProducto categoria, decimal precio)
+    {
+        if(Estado != EstadoProducto.Activo)
+            throw new DomainException($"Solo se pueden modificar productos activos. Estado actual: {Estado}.");
+        if(string.IsNullOrWhiteSpace(nombre))
+            throw new DomainException("El nombre del producto es obligatorio.");
+        if(precio is < PrecioMinimo or > PrecioMaximo)
+            throw new DomainException($"El precio debe estar entre {PrecioMinimo:N0} y {PrecioMaximo:N0}.");
+        Nombre = nombre.Trim();
+        Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim();
+        Categoria = categoria;
+        Precio = precio;
+    }
+
 }

@@ -4,7 +4,9 @@ using Productos.Cqrs.Application.Productos.Commands.AjustarStock;
 using Productos.Cqrs.Application.Productos.Commands.CrearProducto;
 using Productos.Cqrs.Application.Productos.Commands.DescontinuarProducto;
 using Productos.Cqrs.Application.Productos.Commands.EliminarProducto;
+using Productos.Cqrs.Application.Productos.Commands.ActualizarProducto;
 using Productos.Cqrs.Application.Productos.Queries;
+
 using Productos.Cqrs.Domain.Productos;
 
 namespace Productos.Cqrs.Api.Endpoints;
@@ -65,6 +67,17 @@ public static class ProductosEndpoints
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+        group.MapPut("/{id:guid}", async (Guid id, ActualizarProductoRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var producto = await sender.Send(
+                    new ActualizarProductoCommand(id, request.Nombre, request.Descripcion, request.Categoria, request.Precio), ct);
+                return TypedResults.Ok(producto);
+            })
+            .WithName("ActualizarProducto")
+            .Produces<ProductoResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
             {
@@ -77,5 +90,6 @@ public static class ProductosEndpoints
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
 
         return app;
+
     }
 }
