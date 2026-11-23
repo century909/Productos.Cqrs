@@ -64,8 +64,8 @@ public sealed class Producto : Entity
         // Se podria agregar un flag IsDeleted para soft delete, pero en este template se elimina fisicamente.
     }
 
-    // AjustarStock y Descontinuar no se exponen en la API de este template: los usa el seed (DatosIniciales)
-    // y sirven de modelo para agregar nuevos comandos.
+    // AjustarStock y Descontinuar se exponen como commands en Application y como endpoints en la API.
+    // El seed (DatosIniciales) tambien los usa para construir estados de ejemplo.
 
     public MovimientoStock AjustarStock(int cantidad, string motivo, DateTime ahora)
     {

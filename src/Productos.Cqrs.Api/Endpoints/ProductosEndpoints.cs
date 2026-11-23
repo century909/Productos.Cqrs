@@ -1,5 +1,8 @@
 using Productos.Cqrs.Application.Abstractions.Messaging;
+using Productos.Cqrs.Application.Productos;
+using Productos.Cqrs.Application.Productos.Commands.AjustarStock;
 using Productos.Cqrs.Application.Productos.Commands.CrearProducto;
+using Productos.Cqrs.Application.Productos.Commands.DescontinuarProducto;
 using Productos.Cqrs.Application.Productos.Commands.EliminarProducto;
 using Productos.Cqrs.Application.Productos.Queries;
 using Productos.Cqrs.Domain.Productos;
@@ -40,7 +43,29 @@ public static class ProductosEndpoints
             .WithName("CrearProducto")
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
-        
+
+        group.MapPost("/{id:guid}/movimientos", async (Guid id, AjustarStockRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var producto = await sender.Send(new AjustarStockCommand(id, request.Cantidad, request.Motivo), ct);
+                return TypedResults.Ok(producto);
+            })
+            .WithName("AjustarStock")
+            .Produces<ProductoResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/{id:guid}/descontinuar", async (Guid id, DescontinuarProductoRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var producto = await sender.Send(new DescontinuarProductoCommand(id, request.Motivo), ct);
+                return TypedResults.Ok(producto);
+            })
+            .WithName("DescontinuarProducto")
+            .Produces<ProductoResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
         group.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ct) =>
             {
                 await sender.Send(new EliminarProductoCommand(id), ct);
