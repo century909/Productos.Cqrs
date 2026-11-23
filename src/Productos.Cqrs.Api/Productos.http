@@ -171,3 +171,27 @@ Content-Type: application/json
   "categoria": "Electronica",
   "precio": 10
 }
+
+### Actualizar solo el precio (PATCH, 200)
+PATCH {{baseUrl}}/api/productos/{{productoId}}
+Content-Type: application/json
+
+{
+  "precio": 4500000
+}
+
+### PATCH producto inexistente (404)
+PATCH {{baseUrl}}/api/productos/99999999-9999-9999-9999-999999999999
+Content-Type: application/json
+
+{
+  "precio": 1000
+}
+
+### PATCH precio fuera de rango (422 negocio)
+PATCH {{baseUrl}}/api/productos/{{productoId}}
+Content-Type: application/json
+
+{
+  "precio": 5
+}

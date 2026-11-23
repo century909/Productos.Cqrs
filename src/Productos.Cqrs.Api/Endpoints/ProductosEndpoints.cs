@@ -5,6 +5,7 @@ using Productos.Cqrs.Application.Productos.Commands.CrearProducto;
 using Productos.Cqrs.Application.Productos.Commands.DescontinuarProducto;
 using Productos.Cqrs.Application.Productos.Commands.EliminarProducto;
 using Productos.Cqrs.Application.Productos.Commands.ActualizarProducto;
+using Productos.Cqrs.Application.Productos.Commands.ActualizarPrecio;
 using Productos.Cqrs.Application.Productos.Queries;
 
 using Productos.Cqrs.Domain.Productos;
@@ -74,6 +75,17 @@ public static class ProductosEndpoints
                 return TypedResults.Ok(producto);
             })
             .WithName("ActualizarProducto")
+            .Produces<ProductoResponse>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status404NotFound)
+            .ProducesProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPatch("/{id:guid}", async (Guid id, ActualizarPrecioRequest request, ISender sender, CancellationToken ct) =>
+            {
+                var producto = await sender.Send(new ActualizarPrecioCommand(id, request.Precio), ct);
+                return TypedResults.Ok(producto);
+            })
+            .WithName("ActualizarPrecio")
             .Produces<ProductoResponse>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status404NotFound)

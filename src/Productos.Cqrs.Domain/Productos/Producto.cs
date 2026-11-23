@@ -111,4 +111,13 @@ public sealed class Producto : Entity
         Precio = precio;
     }
 
+    public void ActualizarPrecio(decimal precio)
+    {
+        if (Estado != EstadoProducto.Activo)
+            throw new DomainException($"Solo se pueden modificar productos activos. Estado actual: {Estado}.");
+        if (precio is < PrecioMinimo or > PrecioMaximo)
+            throw new DomainException($"El precio debe estar entre {PrecioMinimo:N0} y {PrecioMaximo:N0}.");
+
+        Precio = precio;
+    }
 }

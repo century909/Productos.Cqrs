@@ -11,6 +11,9 @@ public sealed record ActualizarProductoRequest(
     CategoriaProducto Categoria,
     decimal Precio);
 
+/// <summary>PATCH parcial: solo viaja el campo que se quiere modificar.</summary>
+public sealed record ActualizarPrecioRequest(decimal Precio);
+
 public sealed record DescontinuarProductoRequest(string Motivo);
 
 /// <summary>Cantidad firmada: positiva entrada, negativa salida.</summary>
