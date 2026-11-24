@@ -7,8 +7,7 @@ internal sealed class AjustarStockCommandValidator : AbstractValidator<AjustarSt
 {
     public AjustarStockCommandValidator()
     {
-        RuleFor(x => x.ProductoId).NotEmpty();
-        RuleFor(x => x.Cantidad).NotEqual(0).WithMessage("La cantidad del movimiento no puede ser cero.");
-        RuleFor(x => x.Motivo).NotEmpty().MaximumLength(200);
+        RuleFor(x => x.ProductoId).GreaterThan(0);
+        RuleFor(x => x.Cantidad).NotEqual(0).WithMessage("La cantidad del ajuste no puede ser cero.");
     }
 }

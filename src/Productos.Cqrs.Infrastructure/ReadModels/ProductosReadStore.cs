@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Productos.Cqrs.Application.Abstractions.Data;
 using Productos.Cqrs.Application.Productos;
-using Productos.Cqrs.Domain.Productos;
 using Productos.Cqrs.Infrastructure.Persistence;
 
 namespace Productos.Cqrs.Infrastructure.ReadModels;
@@ -12,38 +11,29 @@ namespace Productos.Cqrs.Infrastructure.ReadModels;
 /// </summary>
 internal sealed class ProductosReadStore(ProductosDbContext db) : IProductosReadStore
 {
-    public Task<ProductoResponse?> ObtenerAsync(Guid id, CancellationToken ct = default)
+    public Task<ProductoResponse?> ObtenerAsync(int id, CancellationToken ct = default)
         => db.Productos.AsNoTracking()
             .Where(p => p.Id == id)
             .Select(p => new ProductoResponse(
-                p.Id, p.Sku, p.Nombre, p.Descripcion, p.Categoria, p.Precio, p.Stock,
-                p.Precio * p.Stock, p.Estado, p.MotivoDescontinuacion, p.FechaCreacion))
+                p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
+                p.Precio * p.Stock, p.FechaCreacion, p.FechaActualizacion))
             .FirstOrDefaultAsync(ct);
 
-    public async Task<IReadOnlyList<ProductoResponse>> ListarAsync(CategoriaProducto? categoria, CancellationToken ct = default)
+    public async Task<IReadOnlyList<ProductoResponse>> ListarAsync(string? nombre = null, CancellationToken ct = default)
     {
         var query = db.Productos.AsNoTracking();
-        if (categoria is not null)
-            query = query.Where(p => p.Categoria == categoria);
+
+        if (!string.IsNullOrWhiteSpace(nombre))
+        {
+            var patron = $"%{nombre.Trim()}%";
+            query = query.Where(p => EF.Functions.ILike(p.Nombre, patron));
+        }
 
         return await query
-            .OrderBy(p => p.FechaCreacion)
+            .OrderBy(p => p.Id)
             .Select(p => new ProductoResponse(
-                p.Id, p.Sku, p.Nombre, p.Descripcion, p.Categoria, p.Precio, p.Stock,
-                p.Precio * p.Stock, p.Estado, p.MotivoDescontinuacion, p.FechaCreacion))
-            .ToListAsync(ct);
-    }
-
-    public async Task<IReadOnlyList<MovimientoStockResponse>?> ListarMovimientosAsync(Guid productoId, CancellationToken ct = default)
-    {
-        if (!await db.Productos.AnyAsync(p => p.Id == productoId, ct))
-            return null;
-
-        return await db.Productos.AsNoTracking()
-            .Where(p => p.Id == productoId)
-            .SelectMany(p => p.Movimientos)
-            .OrderByDescending(m => m.Fecha)
-            .Select(m => new MovimientoStockResponse(m.Id, m.Tipo, m.Cantidad, m.Motivo, m.Fecha))
+                p.Id, p.Nombre, p.Descripcion, p.Precio, p.Stock,
+                p.Precio * p.Stock, p.FechaCreacion, p.FechaActualizacion))
             .ToListAsync(ct);
     }
 }

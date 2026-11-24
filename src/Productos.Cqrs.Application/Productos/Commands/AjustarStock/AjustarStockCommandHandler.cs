@@ -14,7 +14,7 @@ internal sealed class AjustarStockCommandHandler(
         var producto = await repository.ObtenerPorIdAsync(command.ProductoId, ct)
             ?? throw NotFoundException.Producto(command.ProductoId);
 
-        producto.AjustarStock(command.Cantidad, command.Motivo, timeProvider.GetUtcNow().UtcDateTime);
+        producto.AjustarStock(command.Cantidad, timeProvider.GetUtcNow());
 
         await unitOfWork.SaveChangesAsync(ct);
         return producto.ToResponse();

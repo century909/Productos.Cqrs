@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Detalles tecnicos: EF Core, servicios externos. Implementa los puertos de Domain/Application. -->
+  <!-- Detalles tecnicos: EF Core + PostgreSQL, servicios externos. Implementa los puertos de Domain/Application. -->
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Productos.Cqrs.Application\Productos.Cqrs.Application.csproj" />

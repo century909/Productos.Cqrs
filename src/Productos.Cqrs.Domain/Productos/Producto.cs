@@ -4,120 +4,99 @@ namespace Productos.Cqrs.Domain.Productos;
 
 /// <summary>
 /// Agregado raiz. Modelo rico: el estado solo cambia a traves de metodos que protegen las invariantes.
+/// Refleja exactamente la tabla public.products (id, name, description, price, stock, created_at, updated_at).
 /// No conoce EF Core, HTTP ni ninguna tecnologia: es C# puro y se prueba sin infraestructura.
 /// </summary>
 public sealed class Producto : Entity
 {
-    public const decimal PrecioMinimo = 100m;
-    public const decimal PrecioMaximo = 100_000_000m;
+    public const int NombreMaxLength = 150;
+    public const int DescripcionMaxLength = 500;
+    public const decimal PrecioMinimo = 0m;
 
-    private readonly List<MovimientoStock> _movimientos = [];
+    // NUMERIC(18,2): 16 digitos enteros + 2 decimales.
+    public const decimal PrecioMaximo = 9_999_999_999_999_999.99m;
 
     private Producto() { } // Requerido por el ORM
 
-    public string Sku { get; private set; } = null!;
     public string Nombre { get; private set; } = null!;
     public string? Descripcion { get; private set; }
-    public CategoriaProducto Categoria { get; private set; }
     public decimal Precio { get; private set; }
     public int Stock { get; private set; }
-    public EstadoProducto Estado { get; private set; }
-    public string? MotivoDescontinuacion { get; private set; }
-    public DateTime FechaCreacion { get; private set; }
+    public DateTimeOffset FechaCreacion { get; private set; }
+    public DateTimeOffset? FechaActualizacion { get; private set; }
 
     public decimal ValorInventario => Precio * Stock;
-    public IReadOnlyCollection<MovimientoStock> Movimientos => _movimientos.AsReadOnly();
 
     public static Producto Crear(
-        Guid id, string sku, string nombre, string? descripcion,
-        CategoriaProducto categoria, decimal precio, int stockInicial, DateTime ahora)
+        string nombre, string? descripcion, decimal precio, int stockInicial, DateTimeOffset ahora)
     {
-        if (string.IsNullOrWhiteSpace(sku))
-            throw new DomainException("El SKU es obligatorio.");
-        if (string.IsNullOrWhiteSpace(nombre))
-            throw new DomainException("El nombre es obligatorio.");
-        if (precio is < PrecioMinimo or > PrecioMaximo)
-            throw new DomainException($"El precio debe estar entre {PrecioMinimo:N0} y {PrecioMaximo:N0}.");
+        ValidarNombre(nombre);
+        ValidarDescripcion(descripcion);
+        ValidarPrecio(precio);
         if (stockInicial < 0)
             throw new DomainException("El stock inicial no puede ser negativo.");
 
         return new Producto
         {
-            Id = id,
-            Sku = sku.Trim().ToUpperInvariant(),
             Nombre = nombre.Trim(),
-            Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim(),
-            Categoria = categoria,
+            Descripcion = NormalizarDescripcion(descripcion),
             Precio = precio,
             Stock = stockInicial,
-            Estado = EstadoProducto.Activo,
             FechaCreacion = ahora
         };
     }
 
-    public void Eliminar()
+    public void Actualizar(string nombre, string? descripcion, decimal precio, DateTimeOffset ahora)
     {
-        if (Estado != EstadoProducto.Descontinuado)
-            throw new DomainException($"Solo se pueden eliminar productos descontinuados. Estado actual: {Estado}.");
-        if (Stock > 0)
-            throw new DomainException("No se puede eliminar un producto con stock positivo.");
-        // Se podria agregar un flag IsDeleted para soft delete, pero en este template se elimina fisicamente.
+        ValidarNombre(nombre);
+        ValidarDescripcion(descripcion);
+        ValidarPrecio(precio);
+
+        Nombre = nombre.Trim();
+        Descripcion = NormalizarDescripcion(descripcion);
+        Precio = precio;
+        FechaActualizacion = ahora;
     }
 
-    // AjustarStock y Descontinuar se exponen como commands en Application y como endpoints en la API.
-    // El seed (DatosIniciales) tambien los usa para construir estados de ejemplo.
-
-    public MovimientoStock AjustarStock(int cantidad, string motivo, DateTime ahora)
+    public void ActualizarPrecio(decimal precio, DateTimeOffset ahora)
     {
-        if (Estado != EstadoProducto.Activo)
-            throw new DomainException($"El producto esta {Estado} y no admite movimientos de stock.");
+        ValidarPrecio(precio);
+        Precio = precio;
+        FechaActualizacion = ahora;
+    }
+
+    /// <summary>Cantidad firmada: positiva registra una entrada, negativa una salida.</summary>
+    public void AjustarStock(int cantidad, DateTimeOffset ahora)
+    {
         if (cantidad == 0)
-            throw new DomainException("La cantidad del movimiento no puede ser cero.");
+            throw new DomainException("La cantidad del ajuste no puede ser cero.");
         if (Stock + cantidad < 0)
             throw new DomainException("Stock insuficiente para registrar la salida.");
-        if (string.IsNullOrWhiteSpace(motivo))
-            throw new DomainException("El motivo del movimiento es obligatorio.");
 
         Stock += cantidad;
-        var tipo = cantidad > 0 ? TipoMovimientoStock.Entrada : TipoMovimientoStock.Salida;
-        var movimiento = MovimientoStock.Crear(Id, tipo, cantidad, motivo.Trim(), ahora);
-        _movimientos.Add(movimiento);
-        return movimiento;
+        FechaActualizacion = ahora;
     }
 
-    public void Descontinuar(string motivo)
+    private static void ValidarNombre(string nombre)
     {
-        if (Estado != EstadoProducto.Activo)
-            throw new DomainException($"Solo se pueden descontinuar productos activos. Estado actual: {Estado}.");
-        if (Stock > 0)
-            throw new DomainException("Solo se puede descontinuar un producto sin stock. Ajuste el stock a cero primero.");
-        if (string.IsNullOrWhiteSpace(motivo))
-            throw new DomainException("El motivo de descontinuacion es obligatorio.");
-
-        Estado = EstadoProducto.Descontinuado;
-        MotivoDescontinuacion = motivo.Trim();
-    }
-    public void Actualizar(string nombre, string? descripcion, CategoriaProducto categoria, decimal precio)
-    {
-        if(Estado != EstadoProducto.Activo)
-            throw new DomainException($"Solo se pueden modificar productos activos. Estado actual: {Estado}.");
-        if(string.IsNullOrWhiteSpace(nombre))
-            throw new DomainException("El nombre del producto es obligatorio.");
-        if(precio is < PrecioMinimo or > PrecioMaximo)
-            throw new DomainException($"El precio debe estar entre {PrecioMinimo:N0} y {PrecioMaximo:N0}.");
-        Nombre = nombre.Trim();
-        Descripcion = string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim();
-        Categoria = categoria;
-        Precio = precio;
+        if (string.IsNullOrWhiteSpace(nombre))
+            throw new DomainException("El nombre es obligatorio.");
+        if (nombre.Trim().Length > NombreMaxLength)
+            throw new DomainException($"El nombre no puede superar los {NombreMaxLength} caracteres.");
     }
 
-    public void ActualizarPrecio(decimal precio)
+    private static void ValidarDescripcion(string? descripcion)
     {
-        if (Estado != EstadoProducto.Activo)
-            throw new DomainException($"Solo se pueden modificar productos activos. Estado actual: {Estado}.");
+        if (descripcion?.Trim().Length > DescripcionMaxLength)
+            throw new DomainException($"La descripcion no puede superar los {DescripcionMaxLength} caracteres.");
+    }
+
+    private static void ValidarPrecio(decimal precio)
+    {
         if (precio is < PrecioMinimo or > PrecioMaximo)
-            throw new DomainException($"El precio debe estar entre {PrecioMinimo:N0} y {PrecioMaximo:N0}.");
-
-        Precio = precio;
+            throw new DomainException($"El precio debe estar entre {PrecioMinimo:N2} y {PrecioMaximo:N2}.");
     }
+
+    private static string? NormalizarDescripcion(string? descripcion)
+        => string.IsNullOrWhiteSpace(descripcion) ? null : descripcion.Trim();
 }

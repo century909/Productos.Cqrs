@@ -6,6 +6,11 @@
 # dotenv files
 .env
 
+# Configuracion local con credenciales (cadenas de conexion, secretos)
+appsettings.Development.json
+appsettings.Local.json
+appsettings.*.Local.json
+
 # User-specific files
 *.rsuser
 *.suo

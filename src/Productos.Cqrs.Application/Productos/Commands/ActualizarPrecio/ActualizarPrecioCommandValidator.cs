@@ -1,4 +1,5 @@
 using FluentValidation;
+using Productos.Cqrs.Domain.Productos;
 
 namespace Productos.Cqrs.Application.Productos.Commands.ActualizarPrecio;
 
@@ -7,7 +8,10 @@ internal sealed class ActualizarPrecioCommandValidator : AbstractValidator<Actua
 {
     public ActualizarPrecioCommandValidator()
     {
-        RuleFor(x => x.ProductoId).NotEmpty();
-        RuleFor(x => x.Precio).GreaterThan(0);
+        RuleFor(x => x.ProductoId).GreaterThan(0);
+        RuleFor(x => x.Precio)
+            .GreaterThanOrEqualTo(Producto.PrecioMinimo)
+            .LessThanOrEqualTo(Producto.PrecioMaximo)
+            .PrecisionScale(18, 2, ignoreTrailingZeros: false);
     }
 }

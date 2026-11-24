@@ -4,7 +4,7 @@ using Productos.Cqrs.Application.Common;
 
 namespace Productos.Cqrs.Application.Productos.Queries;
 
-public sealed record ObtenerProductoQuery(Guid ProductoId) : IQuery<ProductoResponse>;
+public sealed record ObtenerProductoQuery(int ProductoId) : IQuery<ProductoResponse>;
 
 /// <summary>Lado de lectura: va directo al read store, no carga el agregado.</summary>
 internal sealed class ObtenerProductoQueryHandler(IProductosReadStore readStore)

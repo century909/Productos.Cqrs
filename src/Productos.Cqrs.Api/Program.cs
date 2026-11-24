@@ -14,11 +14,14 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 // Composition Root
 builder.Services.AddApplication();
-builder.Services.AddInfrastructure(builder.Configuration["Persistence:DatabaseName"] ?? "ProductosDb");
+
+var connectionString = builder.Configuration.GetConnectionString("BootcampDb")
+    ?? throw new InvalidOperationException(
+        "Falta la cadena de conexion 'ConnectionStrings:BootcampDb' en appsettings.json.");
+
+builder.Services.AddInfrastructure(connectionString);
 
 var app = builder.Build();
-
-app.Services.InicializarBaseDeDatos();
 
 app.UseExceptionHandler();
 

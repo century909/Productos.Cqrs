@@ -1,5 +1,4 @@
 using Productos.Cqrs.Application.Productos;
-using Productos.Cqrs.Domain.Productos;
 
 namespace Productos.Cqrs.Application.Abstractions.Data;
 
@@ -9,9 +8,8 @@ namespace Productos.Cqrs.Application.Abstractions.Data;
 /// </summary>
 public interface IProductosReadStore
 {
-    Task<ProductoResponse?> ObtenerAsync(Guid id, CancellationToken ct = default);
-    Task<IReadOnlyList<ProductoResponse>> ListarAsync(CategoriaProducto? categoria, CancellationToken ct = default);
+    Task<ProductoResponse?> ObtenerAsync(int id, CancellationToken ct = default);
 
-    /// <returns>null si el producto no existe.</returns>
-    Task<IReadOnlyList<MovimientoStockResponse>?> ListarMovimientosAsync(Guid productoId, CancellationToken ct = default);
+    /// <summary>Filtra por coincidencia parcial de nombre cuando se indica.</summary>
+    Task<IReadOnlyList<ProductoResponse>> ListarAsync(string? nombre = null, CancellationToken ct = default);
 }

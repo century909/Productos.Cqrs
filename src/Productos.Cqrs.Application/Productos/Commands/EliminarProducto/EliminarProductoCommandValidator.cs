@@ -6,6 +6,6 @@ internal sealed class EliminarProductoCommandValidator : AbstractValidator<Elimi
 {
     public EliminarProductoCommandValidator()
     {
-        RuleFor(x => x.ProductoId).NotEmpty();
+        RuleFor(x => x.ProductoId).GreaterThan(0);
     }
 }

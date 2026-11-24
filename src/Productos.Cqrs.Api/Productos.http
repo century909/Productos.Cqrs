@@ -1,154 +1,90 @@
 @baseUrl = http://localhost:5105
-@productoId = 11111111-1111-1111-1111-111111111111
 
-### Listar productos de una categoria
-GET {{baseUrl}}/api/productos?categoria=Electronica
+# La tabla public.products usa id INTEGER IDENTITY: el id lo asigna PostgreSQL.
+# Tras crear un producto, usa el id devuelto en la cabecera Location / body.
+@productoId = 1
 
 ### Listar todos los productos
 GET {{baseUrl}}/api/productos
 
+### Buscar productos por nombre (coincidencia parcial, case-insensitive)
+GET {{baseUrl}}/api/productos?nombre=teclado
+
 ### Obtener producto
 GET {{baseUrl}}/api/productos/{{productoId}}
 
-### Movimientos de stock
-GET {{baseUrl}}/api/productos/{{productoId}}/movimientos
+### Obtener producto inexistente (404)
+GET {{baseUrl}}/api/productos/999999
 
-### Ajustar stock: registrar una salida (200) y crear movimiento
-POST {{baseUrl}}/api/productos/33333333-3333-3333-3333-333333333333/movimientos
-Content-Type: application/json
-
-{
-  "cantidad": -5,
-  "motivo": "Venta mostrador"
-}
-
-### Ajustar stock con cantidad cero (400 formato)
-POST {{baseUrl}}/api/productos/33333333-3333-3333-3333-333333333333/movimientos
-Content-Type: application/json
-
-{
-  "cantidad": 0,
-  "motivo": "Prueba"
-}
-
-### Ajustar stock de producto descontinuado (422 regla de negocio)
-POST {{baseUrl}}/api/productos/22222222-2222-2222-2222-222222222222/movimientos
-Content-Type: application/json
-
-{
-  "cantidad": 1,
-  "motivo": "Reposicion"
-}
-
-### Descontinuar producto con stock (422 regla de negocio)
-POST {{baseUrl}}/api/productos/33333333-3333-3333-3333-333333333333/descontinuar
-Content-Type: application/json
-
-{
-  "motivo": "Dejo de venderse"
-}
-
-### Descontinuar producto ya descontinuado (422 regla de negocio)
-POST {{baseUrl}}/api/productos/22222222-2222-2222-2222-222222222222/descontinuar
-Content-Type: application/json
-
-{
-  "motivo": "Segundo intento"
-}
-
-### Descontinuar sin motivo (400 formato)
-POST {{baseUrl}}/api/productos/{{productoId}}/descontinuar
-Content-Type: application/json
-
-{
-  "motivo": ""
-}
-
-### Crear producto
+### Crear producto (201)
 POST {{baseUrl}}/api/productos
 Content-Type: application/json
 
 {
   "nombre": "Teclado Mecanico",
   "descripcion": "Teclado con switches rojos",
-  "categoria": "Electronica",
   "precio": 850000,
   "stockInicial": 40
 }
 
-### Crear con precio fuera de rango (422 regla de negocio)
+### Crear con nombre repetido (400, indice ux_products_name_lower)
 POST {{baseUrl}}/api/productos
 Content-Type: application/json
 
 {
   "nombre": "Teclado Mecanico",
-  "categoria": "Electronica",
-  "precio": 10,
-  "stockInicial": 40
+  "descripcion": "Otra descripcion",
+  "precio": 900000,
+  "stockInicial": 10
 }
 
-### Crear con categoria invalida (400 formato)
+### Crear con nombre vacio (400 formato)
 POST {{baseUrl}}/api/productos
 Content-Type: application/json
 
 {
-  "nombre": "Teclado Mecanico",
-  "categoria": "Juguetes",
+  "nombre": "",
   "precio": 850000,
   "stockInicial": 40
 }
 
-### Producto inexistente (404)
-GET {{baseUrl}}/api/productos/99999999-9999-9999-9999-999999999999
-
-### Eliminar producto descontinuado y sin stock (204)
-DELETE {{baseUrl}}/api/productos/22222222-2222-2222-2222-222222222222
-
-### Eliminar producto activo (422 regla de negocio)
-DELETE {{baseUrl}}/api/productos/11111111-1111-1111-1111-111111111111
-
-### Eliminar producto inexistente (404)
-DELETE {{baseUrl}}/api/productos/99999999-9999-9999-9999-999999999999
-
-### Ciclo de vida completo sobre el producto 1111 (ejecutar en orden)
-# 1) Dejar el stock en cero (200)
-POST {{baseUrl}}/api/productos/{{productoId}}/movimientos
+### Crear con precio negativo (400 formato, ck_products_price)
+POST {{baseUrl}}/api/productos
 Content-Type: application/json
 
 {
-  "cantidad": -20,
-  "motivo": "Ajuste a cero para descontinuar"
+  "nombre": "Producto invalido",
+  "precio": -10,
+  "stockInicial": 40
 }
 
-# 2) Descontinuar sin stock (200)
-POST {{baseUrl}}/api/productos/{{productoId}}/descontinuar
+### Crear con stock negativo (400 formato, ck_products_stock)
+POST {{baseUrl}}/api/productos
 Content-Type: application/json
 
 {
-  "motivo": "Fin de vida del producto"
+  "nombre": "Producto invalido 2",
+  "precio": 1000,
+  "stockInicial": -1
 }
-
-# 3) Eliminar descontinuado y sin stock (204)
-DELETE {{baseUrl}}/api/productos/{{productoId}}
 
 ### Actualizar producto (PUT, 200)
 PUT {{baseUrl}}/api/productos/{{productoId}}
 Content-Type: application/json
 
 {
-  "nombre": "Laptop Pro 15",
-  "descripcion": "16 GB RAM / 512 GB SSD",
-  "categoria": "Electronica",
-  "precio": 4200000
+  "nombre": "Teclado Mecanico Pro",
+  "descripcion": "Switches rojos / layout ISO",
+  "precio": 920000
 }
 
 ### Actualizar producto inexistente (404)
-PUT {{baseUrl}}/api/productos/99999999-9999-9999-9999-999999999999
+PUT {{baseUrl}}/api/productos/999999
 Content-Type: application/json
 
 {
   "nombre": "Fantasma",
-  "categoria": "Hogar",
+  "descripcion": null,
   "precio": 500000
 }
 
@@ -158,18 +94,7 @@ Content-Type: application/json
 
 {
   "nombre": "",
-  "categoria": "Electronica",
-  "precio": 4200000
-}
-
-### Actualizar con precio fuera de rango (422 negocio)
-PUT {{baseUrl}}/api/productos/{{productoId}}
-Content-Type: application/json
-
-{
-  "nombre": "Laptop Pro 15",
-  "categoria": "Electronica",
-  "precio": 10
+  "precio": 920000
 }
 
 ### Actualizar solo el precio (PATCH, 200)
@@ -177,21 +102,51 @@ PATCH {{baseUrl}}/api/productos/{{productoId}}
 Content-Type: application/json
 
 {
-  "precio": 4500000
+  "precio": 950000
 }
 
 ### PATCH producto inexistente (404)
-PATCH {{baseUrl}}/api/productos/99999999-9999-9999-9999-999999999999
+PATCH {{baseUrl}}/api/productos/999999
 Content-Type: application/json
 
 {
   "precio": 1000
 }
 
-### PATCH precio fuera de rango (422 negocio)
-PATCH {{baseUrl}}/api/productos/{{productoId}}
+### Ajustar stock: entrada de 10 (200)
+PATCH {{baseUrl}}/api/productos/{{productoId}}/stock
 Content-Type: application/json
 
 {
-  "precio": 5
+  "cantidad": 10
 }
+
+### Ajustar stock: salida de 5 (200)
+PATCH {{baseUrl}}/api/productos/{{productoId}}/stock
+Content-Type: application/json
+
+{
+  "cantidad": -5
+}
+
+### Ajustar stock dejando saldo negativo (422 regla de negocio)
+PATCH {{baseUrl}}/api/productos/{{productoId}}/stock
+Content-Type: application/json
+
+{
+  "cantidad": -999999
+}
+
+### Ajustar stock con cantidad cero (400 formato)
+PATCH {{baseUrl}}/api/productos/{{productoId}}/stock
+Content-Type: application/json
+
+{
+  "cantidad": 0
+}
+
+### Eliminar producto (204)
+DELETE {{baseUrl}}/api/productos/{{productoId}}
+
+### Eliminar producto inexistente (404)
+DELETE {{baseUrl}}/api/productos/999999
