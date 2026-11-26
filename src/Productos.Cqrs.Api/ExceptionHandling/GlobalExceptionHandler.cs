@@ -28,6 +28,12 @@ public sealed class GlobalExceptionHandler(IProblemDetailsService problemDetails
             {
                 Status = bad.StatusCode, Title = "Solicitud invalida", Detail = bad.Message
             },
+            NombreProductoDuplicadoException => new HttpValidationProblemDetails(
+                new Dictionary<string, string[]> { ["Nombre"] = [exception.Message] })
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Datos de entrada invalidos"
+            },
             NotFoundException => new ProblemDetails
             {
                 Status = StatusCodes.Status404NotFound, Title = "Recurso no encontrado", Detail = exception.Message

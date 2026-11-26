@@ -12,9 +12,14 @@ internal sealed class ProductoConfiguration : IEntityTypeConfiguration<Producto>
 {
     public void Configure(EntityTypeBuilder<Producto> builder)
     {
-        builder.ToTable("products");
+        builder.ToTable("products", "public", t =>
+        {
+            t.HasCheckConstraint("ck_products_name", "length(btrim(name)) > 0");
+            t.HasCheckConstraint("ck_products_price", "price >= 0");
+            t.HasCheckConstraint("ck_products_stock", "stock >= 0");
+        });
 
-        builder.HasKey(p => p.Id);
+        builder.HasKey(p => p.Id).HasName("pk_products");
         builder.Property(p => p.Id)
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
